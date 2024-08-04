@@ -5,11 +5,19 @@ public partial class player : CharacterBody2D
 {
 	// Movement
 	[Export]
-	public static int speed = 375;
+	public int speed = 375;
 	[Export]
-	public static int gravity = 2500;
+	public int gravity = 2500;
 	[Export]
-	public static int fastFallSpeed = 500;
+	public int fastFallSpeed = 500;
+	[Export]
+	public int jumpStrength = 10;
+	[Export]
+	public int heldJumpStrength = 5;
+	[Export]
+	public int maximumJumpHoldingFrames = 5;
+	public int currentJumpHoldingFrames = 0;
+
 
 
 	// Dash stuff
@@ -27,28 +35,82 @@ public partial class player : CharacterBody2D
 	public bool hasHorizontalDashOnly = false;
 	[Export]
 	public bool hasVerticalDashOnly = false;
+	[Export]
+	public bool groundedDashOnly = false;
+	[Export]
+	public int dashStrength = 500;
 
 
 	public override void _PhysicsProcess(double delta)
 	{
 		Vector2 velocity = Velocity;
 
-		// Add the gravity.
-		velocity.Y += (gravity * (float) delta) + (1 == Input.GetActionStrength("ui_down") ? fastFallSpeed : 0);
 
-		// Get the input direction.
-		float direction = Input.GetAxis("ui_left", "ui_right");
-		velocity.X = direction * speed;
+		// todo : Rajouter le saut
+		bool isJumping = Input.IsActionJustPressed("ui_jump");
+		bool isDashing = Input.IsActionJustPressed("ui_dash");
+		bool isHoldingJump = Input.IsActionPressed("ui_jump");
 
-		Velocity = velocity;
-		
-		MoveAndSlide();
+
+		if (IsOnFloor() && velocity.Y == 0) {
+			currentJumpHoldingFrames = 0;
+		}
+
+
+		if (isJumping || isDashing) {
+			velocity.Y = 0;
+
+			// Jump
+			if (isJumping && IsOnFloor() && velocity.Y == 0) {
+				velocity = DoJump(velocity);
+			}
+
+
+			// Dash
+			if (
+				isDashing
+				&& maxDash == currentDash 
+				&& (!groundedDashOnly || IsOnFloor())
+			) {
+				velocity = DoDash(velocity);
+			}
+
+			Velocity = velocity;
+			MoveAndCollide(velocity);
+
+		} else if (
+			isHoldingJump 
+			&& !isJumping
+			&& maximumJumpHoldingFrames > currentJumpHoldingFrames
+		) {
+			// Maintien du saut
+			velocity = KeepJumping(velocity);
+
+			// Directions
+			velocity = MoveHorizontally(velocity);
+
+			Velocity = velocity;
+			MoveAndCollide(velocity);
+
+		} else {
+			// Déplacement normal
+
+			// Gravité
+			velocity.Y += (gravity * (float) delta) + (1 == Input.GetActionStrength("ui_down") ? fastFallSpeed : 1);
+
+			// Directions
+			velocity = MoveHorizontally(velocity);
+
+			Velocity = velocity;
+			MoveAndSlide();	
+		}
 	}
 
 	public override void _Process(double delta)
 	{
 		RegenDashPassively();
 	}
+
 
 	public void RegenDashPassively () {
 		if (maxDash == currentDash) {
@@ -80,4 +142,68 @@ public partial class player : CharacterBody2D
 
 	[Signal]
 	public delegate void UpdateDashUiEventHandler();
+
+	public Vector2 DoDash(Vector2 velocity) {
+		// todo : Ajouter un knockback en cas de collision avec un ennemi après le dash, sans dégâts subis
+		ConsumeDash();
+
+		if (hasFullDash) {
+			return DoFullDash(velocity);
+		}
+
+		if (hasHorizontalDashOnly) {
+			return DoHorizontalDash(velocity);
+		}
+
+		if (hasVerticalDashOnly) {
+			return DoVerticalDash(velocity);
+		}
+
+		return velocity;
+	}
+
+	private Vector2 DoFullDash(Vector2 velocity) {
+		GD.Print("dash : complet");	
+
+		return velocity;
+	}
+
+	private Vector2 DoHorizontalDash(Vector2 velocity) {
+		GD.Print("dash : horizontal");	
+
+		return velocity;
+	}
+
+	private Vector2 DoVerticalDash(Vector2 velocity) {
+		GD.Print("dash : vertical");	
+
+		return velocity;
+	}
+
+	private Vector2 DoJump(Vector2 jump) {
+		currentJumpHoldingFrames = 0;
+		jump.Y -= jumpStrength;
+
+		return jump;
+	}
+
+	private Vector2 KeepJumping(Vector2 jump) {
+		currentJumpHoldingFrames++;
+		jump.Y -= heldJumpStrength;
+
+		return jump;
+	}
+
+	private Vector2 MoveHorizontally(Vector2 velocity) {
+		// Directions
+		float direction = Input.GetAxis("ui_left", "ui_right");
+		velocity.X = direction * speed;
+
+		return velocity;
+	}
+
+	private void ConsumeDash() {
+		currentDash = 0;
+		EmitSignal(SignalName.UpdateDashUi);
+	}
 }
