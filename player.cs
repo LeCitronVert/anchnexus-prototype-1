@@ -75,22 +75,17 @@ public partial class player : CharacterBody2D
 				velocity = DoDash(velocity);
 			}
 
-			Velocity = velocity;
-			MoveAndCollide(velocity);
-
 		} else if (
 			isHoldingJump 
 			&& !isJumping
 			&& maximumJumpHoldingFrames > currentJumpHoldingFrames
+			&& Velocity.Y != 0
 		) {
 			// Maintien du saut
 			velocity = KeepJumping(velocity);
 
 			// Directions
 			velocity = MoveHorizontally(velocity);
-
-			Velocity = velocity;
-			MoveAndCollide(velocity);
 
 		} else {
 			// Déplacement normal
@@ -100,10 +95,10 @@ public partial class player : CharacterBody2D
 
 			// Directions
 			velocity = MoveHorizontally(velocity);
-
-			Velocity = velocity;
-			MoveAndSlide();	
 		}
+
+		Velocity = velocity;
+		MoveAndSlide();	
 	}
 
 	public override void _Process(double delta)
