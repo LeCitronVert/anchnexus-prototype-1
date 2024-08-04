@@ -88,6 +88,10 @@ public partial class player : CharacterBody2D
 			velocity = MoveHorizontally(velocity);
 
 		} else {
+			if (Velocity.Y != 0) {
+				currentJumpHoldingFrames = maximumJumpHoldingFrames;
+			}
+
 			// Déplacement normal
 
 			// Gravité
