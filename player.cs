@@ -11,9 +11,9 @@ public partial class player : CharacterBody2D
 	[Export]
 	public int fastFallSpeed = 500;
 	[Export]
-	public int jumpStrength = 10;
+	public int jumpStrength = 200;
 	[Export]
-	public int heldJumpStrength = 5;
+	public int heldJumpStrength = 100;
 	[Export]
 	public int maximumJumpHoldingFrames = 5;
 	public int currentJumpHoldingFrames = 0;
