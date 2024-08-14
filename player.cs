@@ -123,6 +123,10 @@ public partial class player : CharacterBody2D
 
 	public override void _Process(double delta)
 	{
+		if (Input.IsActionJustPressed("ui_filedialog_refresh")) {
+			GetTree().ReloadCurrentScene();
+		}
+
 		RegenDashPassively();
 	}
 
