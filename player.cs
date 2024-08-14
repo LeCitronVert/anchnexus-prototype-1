@@ -41,7 +41,17 @@ public partial class player : CharacterBody2D
 	[Export]
 	public int dashStrength = 900;
 	[Export]
-	public int dashLength = 7;
+	public int dashLength = 20;
+	[Export]
+	public bool dashBuildsUpSpeed = true;
+	[Export]
+	public int reachesFullDashSpeedWhenLengthIs = 15;
+	[Export]
+	public bool dashDecaysSpeed = true;
+	[Export]
+	public int speedStartsDecayingWhenLengthIs = 5;
+	[Export]
+	public float minimumSpeedFactorWhenDecayingOrAccelerating = 0.1F;
 	public int remainingDashLength = 0;
 	public Vector2 currentDashDirection;
 
@@ -154,27 +164,51 @@ public partial class player : CharacterBody2D
 		if (!isHoldingDash) {
 			remainingDashLength = dashLength;
 		} else {
-			return currentDashDirection;
+			return applyAccelerationOrDecay(currentDashDirection);
 		}
 
 		if (hasFullDash) {
-			return DoFullDash(velocity);
+			return applyAccelerationOrDecay(DoFullDash(velocity));
 		}
 
 		if (hasHorizontalDashOnly) {
-			return DoHorizontalDash(velocity);
+			return applyAccelerationOrDecay(DoHorizontalDash(velocity));
 		}
 
 		if (hasVerticalDashOnly) {
-			return DoVerticalDash(velocity);
+			return applyAccelerationOrDecay(DoVerticalDash(velocity));
+		}
+
+		return velocity;
+	}
+	
+	private Vector2 applyAccelerationOrDecay (Vector2 velocity) {
+		float? factor = null;
+
+		if (
+			dashBuildsUpSpeed
+			&& remainingDashLength >= reachesFullDashSpeedWhenLengthIs
+		) {
+			float accelerationFrames = dashLength - reachesFullDashSpeedWhenLengthIs;
+			float elapsedAccelerationFrames = dashLength - remainingDashLength;
+
+			factor = Math.Max(minimumSpeedFactorWhenDecayingOrAccelerating, (elapsedAccelerationFrames / accelerationFrames));
+		} else if (
+			dashDecaysSpeed
+			&& remainingDashLength <= speedStartsDecayingWhenLengthIs
+		) {
+			factor = Math.Max(minimumSpeedFactorWhenDecayingOrAccelerating, ((float) remainingDashLength / (float) speedStartsDecayingWhenLengthIs));
+		}
+
+		if (null != factor) {
+			velocity.X *= (float) factor;
+			velocity.Y *= (float) factor;
 		}
 
 		return velocity;
 	}
 
 	private Vector2 DoFullDash(Vector2 velocity) {
-		GD.Print("dash : complet");	
-
 		velocity = AddHorizontalDashPower(velocity);
 		velocity = AddVerticalDashPower(velocity);
 
@@ -184,8 +218,6 @@ public partial class player : CharacterBody2D
 	}
 
 	private Vector2 DoHorizontalDash(Vector2 velocity) {
-		GD.Print("dash : horizontal");	
-
 		velocity.Y = 0;
 		velocity = AddHorizontalDashPower(velocity);
 
@@ -195,8 +227,6 @@ public partial class player : CharacterBody2D
 	}
 
 	private Vector2 DoVerticalDash(Vector2 velocity) {
-		GD.Print("dash : vertical");	
-
 		velocity.X = 0;
 		velocity = AddVerticalDashPower(velocity);
 

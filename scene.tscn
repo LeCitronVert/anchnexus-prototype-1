@@ -1232,8 +1232,6 @@ unique_name_in_owner = true
 position = Vector2(92, 43)
 scale = Vector2(0.75, 0.75)
 script = ExtResource("1_rkdfo")
-hasFullDash = false
-hasVerticalDashOnly = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
 position = Vector2(0.5, -0.5)
