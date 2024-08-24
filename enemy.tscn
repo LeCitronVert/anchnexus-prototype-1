@@ -1,0 +1,55 @@
+[gd_scene load_steps=8 format=3 uid="uid://cvksje87807if"]
+
+[ext_resource type="Texture2D" uid="uid://b0t2gw7drv4ei" path="res://enemy_sprite.png" id="1_6k5w1"]
+[ext_resource type="Script" path="res://Enemy.cs" id="1_ygulo"]
+[ext_resource type="Script" path="res://EnemyHurtbox.cs" id="2_sf0ue"]
+[ext_resource type="Script" path="res://EnemyHealthBar.cs" id="3_qmhj4"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mlnds"]
+size = Vector2(243.896, 260)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_baacb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_6k5w1")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wgqca"]
+bg_color = Color(1, 0.0509804, 0.6, 1)
+
+[node name="EnemyPrefab" type="Node2D"]
+
+[node name="Enemy" type="CharacterBody2D" parent="."]
+scale = Vector2(0.35, 0.35)
+script = ExtResource("1_ygulo")
+
+[node name="Area2D" type="Area2D" parent="Enemy"]
+scale = Vector2(1, 1)
+script = ExtResource("2_sf0ue")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy/Area2D"]
+position = Vector2(-3.76624, -4.28572)
+shape = SubResource("RectangleShape2D_mlnds")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy"]
+position = Vector2(-4.33488e-06, -4.33488e-06)
+shape = SubResource("RectangleShape2D_mlnds")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Enemy"]
+scale = Vector2(0.439897, 0.439897)
+sprite_frames = SubResource("SpriteFrames_baacb")
+
+[node name="ProgressBar" type="ProgressBar" parent="Enemy"]
+offset_left = -118.0
+offset_top = -169.0
+offset_right = 118.0
+offset_bottom = -142.0
+theme_override_styles/fill = SubResource("StyleBoxFlat_wgqca")
+max_value = 3.0
+step = 1.0
+script = ExtResource("3_qmhj4")

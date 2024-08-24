@@ -56,6 +56,25 @@ public partial class player : CharacterBody2D
 	public Vector2 currentDashDirection;
 
 
+	// Attacks and collisions
+	private PlayerHurtbox playerHurtbox;
+	private bool isAttacked = false;
+	[Export]
+	public int knockbackX = 500;
+	[Export]
+	public int knockbackY = -200;
+	[Export]
+	public int knockbackDuration = 10;
+	public int remainingKnockbackDuration = 0;
+	public Vector2 currentKnockbackDirection;
+
+	public override void _Ready()
+	{
+		playerHurtbox = GetNode<PlayerHurtbox>("PlayerHurtbox");
+		playerHurtbox.AreaEntered += _on_PlayerHurtbox_area_entered;
+	}
+
+
 	public override void _PhysicsProcess(double delta)
 	{
 		Vector2 velocity = Velocity;
@@ -70,7 +89,15 @@ public partial class player : CharacterBody2D
 			remainingDashLength = 0;
 		}
 
-		if (0 < remainingDashLength) {
+		// Movement and actions
+
+		if (isAttacked) {
+			velocity = GetKnockedBack(velocity);
+			isAttacked = false;
+		} else if (IsCurrentlyKnockedBack()) {
+			remainingKnockbackDuration--;
+			velocity = currentKnockbackDirection;
+		} else if (IsCurrentlyDashing()) {
 			remainingDashLength--;
 			velocity = DoDash(velocity, true);
 		} else if (isJumping || isDashing) {
@@ -298,5 +325,38 @@ public partial class player : CharacterBody2D
 	private void ConsumeDash() {
 		currentDash = 0;
 		EmitSignal(SignalName.UpdateDashUi);
+	}
+
+	public void _on_PlayerHurtbox_area_entered(Area2D area)
+	{
+		if (!area.IsInGroup("enemyHurtbox")) {
+			return;
+		}
+
+		if (IsCurrentlyDashing()) {
+			// todo : Bounceback
+		} else{
+			isAttacked = true;
+		}
+	}
+
+	public Vector2 GetKnockedBack(Vector2 velocity)
+	{
+		remainingKnockbackDuration = knockbackDuration;
+
+		velocity.X = knockbackX * -lastInputDirection;
+		velocity.Y = knockbackY;
+
+		currentKnockbackDirection = velocity;
+
+		return velocity;
+	}
+
+	public bool IsCurrentlyDashing() {
+		return 0 < remainingDashLength;
+	}
+
+	public bool IsCurrentlyKnockedBack() {
+		return 0 < remainingKnockbackDuration;
 	}
 }
