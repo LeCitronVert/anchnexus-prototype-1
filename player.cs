@@ -9,7 +9,12 @@ public partial class player : CharacterBody2D
 	[Export]
 	public int gravity = 2500;
 	[Export]
-	public int fastFallSpeed = 500;
+	public int fastFallSpeed = 1500;
+	[Export]
+	public float fastFallDoubleTapWindowInSeconds = 0.5f;
+	private float fastFallDoubleTapWindow = 0;
+	private bool isFastFalling = false;
+	public bool hasPressedFastFall = false;
 	[Export]
 	public int jumpStrength = 200;
 	[Export]
@@ -67,6 +72,14 @@ public partial class player : CharacterBody2D
 	public int knockbackDuration = 10;
 	public int remainingKnockbackDuration = 0;
 	public Vector2 currentKnockbackDirection;
+	[Export]
+	public int maxGroundedAttacks = 3;
+	private int currentGroundedAttacks = 0;
+	[Export]
+	public int attackCooldown = 10;
+	private int remainingAttackCooldown = 0;
+	private Timer fastFallTimer;
+	
 
 	public override void _Ready()
 	{
@@ -87,6 +100,7 @@ public partial class player : CharacterBody2D
 		if (IsOnFloor() && velocity.Y == 0) {
 			currentJumpHoldingFrames = 0;
 			remainingDashLength = 0;
+			resetFastFall();
 		}
 
 		// Movement and actions
@@ -130,7 +144,9 @@ public partial class player : CharacterBody2D
 			// Directions
 			velocity = MoveHorizontally(velocity);
 
-		} else {
+		} else if (isFastFalling) {
+			velocity.Y = fastFallSpeed;
+		} else{
 			if (Velocity.Y != 0) {
 				currentJumpHoldingFrames = maximumJumpHoldingFrames;
 			}
@@ -138,7 +154,7 @@ public partial class player : CharacterBody2D
 			// Déplacement normal
 
 			// Gravité
-			velocity.Y += (gravity * (float) delta) + (1 == Input.GetActionStrength("ui_down") ? fastFallSpeed : 1);
+			velocity.Y += (gravity * (float) delta) + 1;
 
 			// Directions
 			velocity = MoveHorizontally(velocity);
@@ -155,6 +171,52 @@ public partial class player : CharacterBody2D
 		}
 
 		RegenDashPassively();
+	}
+
+	public override void _Input(InputEvent @event)
+	{
+		if (@event.IsActionPressed("ui_down")) {
+			if (hasPressedFastFall) {
+				isFastFalling = true;
+
+				// Create a Timer node
+				Timer timer = new Timer
+				{
+					WaitTime = fastFallDoubleTapWindowInSeconds, // Set the duration here (e.g., 2 seconds)
+					OneShot = true // Ensure the timer only runs once
+				};
+
+				// Add the timer to the scene tree
+				AddChild(timer);
+
+				// Connect the timeout signal to the resetFastFall method, passing the timer as an argument
+				timer.Connect("timeout", new Callable(this, MethodName.OnFastFallTimerTimeout));
+
+				fastFallTimer = timer;
+
+				// Start the timer
+				timer.Start();
+			} else if (!isFastFalling) {
+				fastFallDoubleTapWindow = fastFallDoubleTapWindowInSeconds;
+				hasPressedFastFall = true;
+			}
+		}
+	}
+
+	private void OnFastFallTimerTimeout() {
+		if (isFastFalling) {
+			return;
+
+		}
+		resetFastFall(fastFallTimer);
+	}
+
+	private void resetFastFall(Timer timer = null) {
+		fastFallDoubleTapWindow = 0;
+		isFastFalling = false;
+		hasPressedFastFall = false;
+
+		timer?.QueueFree();
 	}
 
 
