@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://dl22mx3x5nbm1"]
+[gd_scene load_steps=18 format=3 uid="uid://dl22mx3x5nbm1"]
 
 [ext_resource type="Texture2D" uid="uid://dk8tn3bvge3vu" path="res://icon.svg" id="1_b5e4y"]
 [ext_resource type="Script" path="res://player.cs" id="1_rkdfo"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://PlayerCamera.cs" id="3_wjf6h"]
 [ext_resource type="Script" path="res://DashBar.cs" id="4_0rams"]
 [ext_resource type="Script" path="res://PlayerHurtbox.cs" id="5_fsun3"]
+[ext_resource type="Script" path="res://PlayerAttack.cs" id="6_wkjdw"]
 [ext_resource type="PackedScene" uid="uid://cvksje87807if" path="res://enemy.tscn" id="6_wqiyc"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j723j"]
@@ -28,6 +29,16 @@ animations = [{
 "name": &"default",
 "speed": 5.0
 }]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tbv6j"]
+size = Vector2(63.3333, 123.333)
+
+[sub_resource type="Gradient" id="Gradient_k1ut3"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(0, 1, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_4uoqt"]
+gradient = SubResource("Gradient_k1ut3")
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qivx0"]
 texture = ExtResource("3_wdyuw")
@@ -1261,6 +1272,31 @@ script = ExtResource("5_fsun3")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player/PlayerHurtbox"]
 position = Vector2(0.5, -0.5)
 shape = SubResource("RectangleShape2D_76ast")
+
+[node name="GroundedAttackRight" type="Area2D" parent="Player"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/GroundedAttackRight"]
+position = Vector2(96.3333, -0.333374)
+shape = SubResource("RectangleShape2D_tbv6j")
+script = ExtResource("6_wkjdw")
+
+[node name="Sprite2D" type="Sprite2D" parent="Player/GroundedAttackRight/CollisionShape2D"]
+position = Vector2(-0.0833225, -0.874996)
+scale = Vector2(0.251953, 125.083)
+texture = SubResource("GradientTexture1D_4uoqt")
+
+[node name="GroundedAttackLeft" type="Area2D" parent="Player"]
+position = Vector2(-192, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/GroundedAttackLeft"]
+position = Vector2(96.3333, -0.333374)
+shape = SubResource("RectangleShape2D_tbv6j")
+script = ExtResource("6_wkjdw")
+
+[node name="Sprite2D" type="Sprite2D" parent="Player/GroundedAttackLeft/CollisionShape2D"]
+position = Vector2(-0.0833225, -0.874996)
+scale = Vector2(0.251953, 125.083)
+texture = SubResource("GradientTexture1D_4uoqt")
 
 [node name="Level" type="TileMap" parent="."]
 position = Vector2(0, 16)

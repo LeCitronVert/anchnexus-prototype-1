@@ -78,7 +78,20 @@ public partial class player : CharacterBody2D
 	[Export]
 	public int attackCooldown = 10;
 	private int remainingAttackCooldown = 0;
+	[Export]
+	public static int groundedAttackDamage = 1;
+	[Export]
+	public static int airAttackDamage = groundedAttackDamage;
 	private Timer fastFallTimer;
+	[Export]
+	public int bounceDuration = 10;
+	private int remainingBounceDuration = 0;
+	[Export]
+	public int bounceX = 200;
+	[Export]
+	public int bounceY = -400;
+	private Vector2 bounceDirection;
+
 	
 
 	public override void _Ready()
@@ -98,8 +111,7 @@ public partial class player : CharacterBody2D
 
 
 		if (IsOnFloor() && velocity.Y == 0) {
-			currentJumpHoldingFrames = 0;
-			remainingDashLength = 0;
+			resetDash();
 			resetFastFall();
 		}
 
@@ -108,6 +120,9 @@ public partial class player : CharacterBody2D
 		if (isAttacked) {
 			velocity = GetKnockedBack(velocity);
 			isAttacked = false;
+		} else if (IsCurrentlyBouncing()) {
+			remainingBounceDuration--;
+			velocity = bounceDirection;
 		} else if (IsCurrentlyKnockedBack()) {
 			remainingKnockbackDuration--;
 			velocity = currentKnockbackDirection;
@@ -218,6 +233,12 @@ public partial class player : CharacterBody2D
 
 		timer?.QueueFree();
 	}
+
+	private void resetDash() {
+		currentJumpHoldingFrames = 0;
+		remainingDashLength = 0;
+	}
+
 
 
 	public void RegenDashPassively () {
@@ -391,15 +412,34 @@ public partial class player : CharacterBody2D
 
 	public void _on_PlayerHurtbox_area_entered(Area2D area)
 	{
-		if (!area.IsInGroup("enemyHurtbox")) {
+		if (!area.IsInGroup("enemyHurtbox") || IsCurrentlyBouncing()) {
 			return;
 		}
 
 		if (IsCurrentlyDashing()) {
-			// todo : Bounceback
+			GetBounced(Velocity);
 		} else{
 			isAttacked = true;
 		}
+	}
+
+	public Vector2 GetBounced(Vector2 velocity)
+	{
+		resetDash();
+		GD.Print("Bounced");
+
+		remainingBounceDuration = bounceDuration;
+
+		velocity.X = bounceX * -lastInputDirection;
+		velocity.Y = bounceY;
+
+		bounceDirection = velocity;
+
+		return velocity;
+	}
+
+	public bool IsCurrentlyBouncing() {
+		return 0 < remainingBounceDuration;
 	}
 
 	public Vector2 GetKnockedBack(Vector2 velocity)
